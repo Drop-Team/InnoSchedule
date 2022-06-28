@@ -18,7 +18,7 @@ class CreateUpdateCourseSerializer(ModelSerializer):
 
     class Meta:
         model = CourseModel
-        fields = ("id", "name", "has_division", "course_groups")
+        fields = ("id", "name", "acronym", "has_division", "course_groups")
 
 
 class GetCourseSerializer(ModelSerializer):
@@ -26,4 +26,4 @@ class GetCourseSerializer(ModelSerializer):
 
     class Meta:
         model = CourseModel
-        fields = ("id", "name", "has_division", "course_groups")
+        fields = ("id", "name", "acronym", "has_division", "course_groups")
