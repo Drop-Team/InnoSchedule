@@ -18,6 +18,7 @@ import { EnhancedTableHead } from "./EnhancedTableHead";
 
 export interface BaseRow {
     id: number;
+    uuid: string;
     name: string;
 }
 
@@ -27,6 +28,8 @@ export interface TableColumn<D extends BaseRow> {
     numeric: boolean;
     label: string;
     type: "boolean" | "text" | "date" | "number";
+
+    hidden?: boolean;
 }
 
 export interface DataTableProps<D extends BaseRow> {
@@ -83,7 +86,6 @@ export const DataTable:React.FunctionComponent<any> = <D extends BaseRow>(
         handleRequestSort,
         handleChangePage,
         handleChangeRowsPerPage,
-        handleChangeDense,
         handleRowClick,
         handleResetSelected
     ] = logic.useTable();
@@ -125,7 +127,6 @@ export const DataTable:React.FunctionComponent<any> = <D extends BaseRow>(
                                             hover
                                             sx={props.rowClickable ? {cursor: "pointer"} : null}
                                             onClick={(event) => {
-                                                event.stopPropagation();
                                                 if (props.rowClickable) handleRowClick(event, row.name);
                                             }}
                                             role="checkbox"
@@ -152,6 +153,9 @@ export const DataTable:React.FunctionComponent<any> = <D extends BaseRow>(
                                                     key,
                                                     index
                                                 ) => {
+                                                    if (!props.headCells[index]) return null;
+                                                    if (props.headCells[index].hidden) return null;
+
                                                     return (
                                                         (props.headCells[index].type === "boolean")
                                                             ? (

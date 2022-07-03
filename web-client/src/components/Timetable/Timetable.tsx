@@ -1,28 +1,40 @@
-import React, { ForwardedRef, MutableRefObject, useEffect, useRef } from "react";
+import React, { MutableRefObject, useLayoutEffect, useRef } from "react";
 import { useTimeslotsDisplayLogic } from "components/Timetable/Timetable.logic";
-import { TimetableGrid, TimetableGridProps } from "components/Timetable/TimetableGrid";
+import { TimetableGrid, TimetableGridDrilledProps } from "components/Timetable/TimetableGrid";
 import styles from "components/Timetable/Timetable.module.scss";
-import { TimeslotsLayer } from "components/Timetable/TimeslotsLayer";
+import { TimeslotLayerDrilledProps, TimeslotsLayer } from "components/Timetable/TimeslotsLayer";
+import { useRerenderOnResize } from "utilities/hooks/useRerenderOnResize";
 
-export interface TimetableProps extends TimetableGridProps {
+export interface TimetableCombinedProps extends
+    TimetableGridDrilledProps,
+    TimeslotLayerDrilledProps
+{ }
 
-}
-
-export const Timetable: React.FC<TimetableProps> = (props) => {
+export const Timetable: React.FC<TimetableCombinedProps> = (props) => {
+    let rerenderFlag = useRerenderOnResize();
     const logic = useTimeslotsDisplayLogic(props);
-    let ref = useRef<HTMLTableElement>() as MutableRefObject<HTMLTableElement>;
+    const ref = useRef<HTMLTableElement>() as MutableRefObject<HTMLTableElement>;
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         logic.calculateTimetableDimensions(ref);
-    }, [props]);
+    }, [props, rerenderFlag]);
+
+    const columnObjects = Array.from( props.timeslots.keys() ) as never[];
 
     return (
         <div className={styles["timetable"]}>
-            <TimetableGrid ref={ref} {...props}/>
-            <TimeslotsLayer
+            <TimetableGrid
+                columnObjects={columnObjects}
+                ref={ref}
+                {...props}
+            />
+            { logic.timetableDimensions
+            ? <TimeslotsLayer
+                {...props}
                 timetableDimensions={logic.timetableDimensions}
                 timetableInterval={props.workingHours}
             />
+            : <></> }
         </div>
     );
 }

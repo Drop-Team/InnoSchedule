@@ -1,26 +1,34 @@
-import { TimetableProps } from "components/Timetable/Timetable";
-import { ForwardedRef, MutableRefObject, useMemo, useState } from "react";
+import { TimetableCombinedProps } from "components/Timetable/Timetable";
+import { MutableRefObject, useState } from "react";
 
-export type CoordinatePoint = { x : number, y : number }
 export type TimetableDimensions = {
-    pivot : CoordinatePoint,
-    halfHourLength : number,
+    absolutePivot : { x : number, y : number },
+    relativePivot : { x : number, y : number },
+
     columnWidth : number,
+    columnsCount : number,
+
+    rowHeight : number,
+    rowsCount : number,
 };
 
-export const useTimeslotsDisplayLogic = (props: TimetableProps) => {
-    let [dimensions, setDimensions] = useState<TimetableDimensions | undefined>(undefined);
+export const useTimeslotsDisplayLogic = (props: TimetableCombinedProps) => {
+    const [dimensions, setDimensions] = useState<TimetableDimensions | undefined>(undefined);
 
     return {
         timetableDimensions : dimensions,
         calculateTimetableDimensions(ref: MutableRefObject<HTMLTableElement>) {
-            let firstCell = this.getFirstTableCell(ref);
-            let pivot = this.calculatePivotLocation(firstCell!);
+            const firstCell = this.getFirstTableCell(ref);
+            const relativePivot = this.calculateRelativePivotLocation(firstCell!);
+            const absolutePivot = this.calculateAbsolutePivotLocation(firstCell!);
 
             setDimensions({
-                pivot,
-                halfHourLength: firstCell.offsetHeight,
+                absolutePivot,
+                relativePivot,
+                rowHeight: firstCell.offsetHeight,
                 columnWidth: firstCell.offsetWidth,
+                columnsCount: props.timeslots.size,
+                rowsCount: this.calculateRowsCount(),
             });
         },
 
@@ -32,8 +40,27 @@ export const useTimeslotsDisplayLogic = (props: TimetableProps) => {
             ) as HTMLElement;
         },
 
-        calculatePivotLocation(cell: HTMLElement) {
-            return {x: cell.offsetLeft, y: cell.offsetTop};
+        calculateAbsolutePivotLocation(cell: HTMLElement) {
+            let boundingRect = cell.getBoundingClientRect();
+            let scrollLeftOffset = window.document.documentElement.scrollLeft;
+            let scrollTopOffset  = window.document.documentElement.scrollTop;
+
+            return {
+                x: boundingRect.left + scrollLeftOffset,
+                y: boundingRect.top + scrollTopOffset,
+            };
+        },
+
+        calculateRelativePivotLocation(cell : HTMLElement) {
+            return {
+                x : cell.offsetLeft,
+                y : cell.offsetTop,
+            }
+        },
+
+        calculateRowsCount() {
+            const minutesInInterval = props.workingHours.length('minute');
+            return Math.ceil(minutesInInterval / 30);
         },
     }
 }
